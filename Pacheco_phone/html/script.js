@@ -7,6 +7,7 @@ $(document).ready(function() {
     let currentZZChat = null, currentZZGroupId = null, zzMyNumber = null;
     let fotogramAccount = null;
     let currentCommentPostId = null;
+    let modoCamara = "tras";
 
     // ==========================================
     // INIT & PREFERÊNCIAS
@@ -42,6 +43,8 @@ $(document).ready(function() {
     // ==========================================
     // MENSAGENS LUA → NUI
     // ==========================================
+// ==========================================
+// ==========================================
     window.addEventListener('message', function(e) {
         let d = e.data;
         if (d.action === "abrir") { atualizarData(); $("#telemovel").fadeIn(200); $("#lockscreen").removeClass('unlocked'); appAberta = "locked"; }
@@ -67,8 +70,26 @@ $(document).ready(function() {
         else if (d.action === "newTweet" && appAberta === "twitter" && currentTwitterTopic === d.topic) { carregarFeedTwitter(d.topic); }
         else if (d.action === "newBlackmarketMsg" && appAberta === "blackmarket" && currentBMTopic === d.topic) { window.abrirTopicoBM(d.topic); }
         else if (d.action === "newFotogramPost" && appAberta === "fotogram") { carregarFeedFotogram(); }
-        else if (d.action === "mostrarCamara") { $("#overlay-camara").fadeIn(200); }
-        else if (d.action === "esconderCamara") { $("#overlay-camara").fadeOut(200); }
+        
+        // CORREÇÃO AQUI: Ativa a câmara, centraliza o tlm e ESCONDE o formulário do Fotogram atrás
+        else if (d.action === "mostrarCamara") { 
+            $("#overlay-camara").fadeIn(200); 
+            $("#telemovel").addClass("camara-ativa");
+            
+            // Torna invisível o conteúdo antigo (textos, botões antigos, inputs) para não tapar o jogo
+            $("#telemovel .tela, #telemovel .app-container, #telemovel .nova-publicacao").css("visibility", "hidden");
+            // Garante que o painel da câmara novo fica 100% visível
+            $("#overlay-camara").css("visibility", "visible").find("*").css("visibility", "visible");
+        }
+        
+        // CORREÇÃO AQUI: Fecha a câmara e devolve a visibilidade ao ecrã do Fotogram
+        else if (d.action === "esconderCamara") { 
+            $("#overlay-camara").fadeOut(200); 
+            $("#telemovel").removeClass("camara-ativa");
+            
+            // Devolve a visibilidade ao Fotogram para o jogador publicar a foto
+            $("#telemovel .tela, #telemovel .app-container, #telemovel .nova-publicacao").css("visibility", "visible");
+        }
     });
 
     // ==========================================
@@ -82,6 +103,16 @@ $(document).ready(function() {
         }
     });
     $(document).on('mouseup', function() { isDragging = false; });
+    // Evento para o botão de rodar a câmara
+    $(document).on('click', '#btn-fg-rodar-camara', function(e) {
+        e.preventDefault();
+        
+        // Alterna entre 'tras' e 'selfie'
+        modoCamara = (modoCamara === "tras") ? "selfie" : "tras";
+        
+        // Avisa o Client Lua para reposicionar a câmara do jogo
+        $.post('https://Pacheco_phone/mudarModoCamara', JSON.stringify({ modo: modoCamara }));
+    });
 
     $("#btn-home").click(function() {
         if (appAberta === "locked") return;
@@ -503,16 +534,29 @@ $(document).ready(function() {
         $.post('https://pacheco_phone/tirarFoto', JSON.stringify({}), function() {});
     });
 
-    $("#btn-fg-capturar").click(function() {
-        $.post('https://pacheco_phone/capturarFoto', JSON.stringify({}), function(res) {
-            if(res && res.url) { $("#fg-compose-url").val(res.url); mostrarNotificacao('success','Foto capturada!'); }
-            $("#overlay-camara").fadeOut(200);
+    // Clique no botão de tirar foto (Círculo Branco)
+    $(document).on('click', '#btn-fg-capturar', function(e) {
+        e.preventDefault();
+        
+        // Faz o pedido ao Client Lua para tirar o print
+        $.post('https://Pacheco_phone/capturarFoto', JSON.stringify({}), function(data) {
+            if (data && data.url) {
+                // Injeta o link da foto na tua aba do Fotogram (ajusta os IDs se necessário)
+                // Geralmente guarda-se num input ou mostra-se numa tag <img>
+                $("#fotogram-url-input").val(data.url); 
+                $("#fotogram-preview-img").attr("src", data.url).show();
+                
+                // Se o teu HTML tiver um input de texto para a imagem, podes usar:
+                // $("input[placeholder='https://fivem.net/logo.png']").val(data.url);
+            }
         });
     });
 
-    $("#btn-fg-cancelar-camara").click(function() {
-        $.post('https://pacheco_phone/cancelarFoto', JSON.stringify({}));
-        $("#overlay-camara").fadeOut(200);
+    // Clique no botão de fechar (O 'X')
+    $(document).on('click', '#btn-fg-cancelar-camara', function(e) {
+        e.preventDefault();
+        // Fecha a câmara no GTA
+        $.post('https://Pacheco_phone/cancelarFoto', JSON.stringify({}));
     });
 
     $("#btn-fg-publicar").click(function() {
