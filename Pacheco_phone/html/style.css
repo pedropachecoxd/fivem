@@ -544,3 +544,46 @@ body {
     border-radius: 10px; z-index: 10001; cursor: pointer; transition: 0.2s;
 }
 .home-bar:hover { background: rgba(255,255,255,0.8); }
+
+/* Remove qualquer interferência visual de elementos antigos do Fotogram */
+#telemovel.camara-ativa .nova-publicacao,
+#telemovel.camara-ativa input,
+#telemovel.camara-ativa textarea,
+#telemovel.camara-ativa .box-foto {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+
+/* Garante que o quadrado de foco [ ] continua visível mas com o interior transparente */
+#overlay-camara {
+    background: transparent !important;
+}
+
+/* 1. Ativa animação suave em todas as transições do telemóvel */
+#telemovel {
+    transition: transform 0.4s ease-in-out, right 0.4s ease-in-out, bottom 0.4s ease-in-out, left 0.4s ease-in-out, top 0.4s ease-in-out;
+}
+
+/* 2. QUANDO A CÂMARA ABRE: Move o telemóvel para o centro exato e dá 15% de zoom */
+#telemovel.camara-ativa {
+    position: absolute !important;
+    right: 50% !important;
+    bottom: 50% !important;
+    transform: translate(50%, 50%) scale(1.15) !important;
+}
+
+/* 3. Esconde o fundo padrão das telas para dar lugar ao jogo */
+#telemovel.camara-ativa .tela, 
+#telemovel.camara-ativa .app-container,
+#telemovel.camara-ativa .fotogram-screen {
+    background: transparent !important;
+    background-image: none !important;
+}
+
+/* 4. O TRUQUE DO QUADRADO: Cria uma sombra gigante escura lá dentro, 
+      fazendo com que o jogo SÓ apareça dentro das linhas brancas [ ] */
+.camera-viewfinder {
+    background: transparent !important;
+    box-shadow: 0 0 0 9999px rgba(15, 15, 15, 0.85); /* Escurece tudo o que está fora do quadrado */
+}
